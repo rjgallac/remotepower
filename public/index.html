@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Power Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-section {
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: none;
+        }
+
+        .status-indicator.running {
+            background-color: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.stopped {
+            background-color: #f44336;
+        }
+
+        .status-indicator.checking {
+            background-color: #ff9800;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-start:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-shutdown {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .btn-shutdown:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .btn-shutdown:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .refresh-section {
+            text-align: center;
+        }
+
+        .btn-refresh {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px 20px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .btn-refresh:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .message.error {
+            background-color: #ffcdd2;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+
+        .message.info {
+            background-color: #bbdefb;
+            color: #1565c0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-box {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ Remote Power Control</h1>
+        <p class="subtitle">Linux Laptop (192.168.1.220)</p>
+
+        <div class="status-section">
+            <div class="status-label">LAPTOP STATUS</div>
+            <div>
+                <span class="status-indicator checking" id="statusIndicator"></span>
+                <div class="status-text" id="statusText">Checking...</div>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="button-group">
+            <button class="btn-start" id="btnStart" onclick="startLaptop()">🔌 Start</button>
+            <button class="btn-shutdown" id="btnShutdown" onclick="shutdownLaptop()">⏹️ Shutdown</button>
+        </div>
+
+        <div class="refresh-section">
+            <button class="btn-refresh" id="btnRefresh" onclick="checkStatus()">↻ Check Status</button>
+        </div>
+
+        <div class="info-box">
+            <strong>How it works:</strong><br>
+            • <strong>Start:</strong> Sends Wake-on-LAN magic packet<br>
+            • <strong>Shutdown:</strong> Uses SSH to remotely shut down<br>
+            • Status updates every 30 seconds
+        </div>
+    </div>
+
+    <script>
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const messageEl = document.getElementById('message');
+        const btnStart = document.getElementById('btnStart');
+        const btnShutdown = document.getElementById('btnShutdown');
+        const btnRefresh = document.getElementById('btnRefresh');
+
+        // Auto-check status every 30 seconds
+        let statusCheckInterval = setInterval(checkStatus, 30000);
+
+        // Check status on page load
+        checkStatus();
+
+        async function checkStatus() {
+            try {
+                statusIndicator.className = 'status-indicator checking';
+                statusText.textContent = 'Checking...';
+                btnStart.disabled = true;
+                btnShutdown.disabled = true;
+                btnRefresh.disabled = true;
+
+                const response = await fetch('/api/status');
+                const data = await response.json();
+
+                statusIndicator.className = data.running 
+                    ? 'status-indicator running' 
+                    : 'status-indicator stopped';
+                
+                statusText.textContent = data.running ? '🟢 RUNNING' : '🔴 STOPPED';
+
+                btnStart.disabled = data.running; // Disable start if already running
+                btnShutdown.disabled = !data.running; // Disable shutdown if not running
+                btnRefresh.disabled = false;
+
+            } catch (error) {
+                console.error('Status check failed:', error);
+                statusIndicator.className = 'status-indicator stopped';
+                statusText.textContent = '❓ UNKNOWN';
+                showMessage('Failed to check status', 'error');
+                btnRefresh.disabled = false;
+            }
+        }
+
+        async function startLaptop() {
+            if (!confirm('Send Wake-on-LAN signal to start the laptop?')) return;
+
+            try {
+                btnStart.disabled = true;
+                showMessage('Sending WoL signal...', 'info');
+
+                const response = await fetch('/api/start', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('✓ WoL signal sent! Laptop should start in a few seconds.', 'success');
+                    setTimeout(checkStatus, 3000); // Check status after 3 seconds
+                } else {
+                    showMessage('✗ Failed to send WoL signal: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Start failed:', error);
+                showMessage('✗ Error: ' + error.message, 'error');
+            } finally {
+                btnStart.disabled = false;
+            }
+        }
+
+        async function shutdownLaptop() {
+            if (!confirm('Are you sure you want to shut down the laptop? This cannot be easily undone.')) return;
+
+            try {
+                btnShutdown.disabled = true;
+                showMessage('Sending shutdown command...', 'info');
+
+                const response = await fetch('/api/shutdown', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('✓ Shutdown signal sent! Laptop will shut down shortly.', 'success');
+                    setTimeout(checkStatus, 5000); // Check status after 5 seconds
+                } else {
+                    showMessage('✗ Failed to shutdown: ' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('Shutdown failed:', error);
+                showMessage('✗ Error: ' + error.message, 'error');
+            } finally {
+                btnShutdown.disabled = false;
+            }
+        }
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 5000);
+        }
+
+        // Clear status check interval when page unloads
+        window.addEventListener('beforeunload', () => {
+            clearInterval(statusCheckInterval);
+        });
+    </script>
+</body>
+</html>
