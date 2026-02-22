@@ -117,6 +117,66 @@ npm start
 
 The server will start on `http://localhost:3000`
 
+### Keep the Server Running with PM2 (Recommended)
+
+For production use, keep the server running continuously with [PM2](https://pm2.keymetrics.io/):
+
+**1. Install PM2 globally:**
+```bash
+npm install -g pm2
+```
+
+**2. Start the app with PM2:**
+
+Option A - Using the ecosystem config (recommended):
+```bash
+pm2 start ecosystem.config.js
+```
+
+Option B - Quick start:
+```bash
+pm2 start server.js --name remotepower
+```
+
+**3. Make PM2 restart on system boot:**
+```bash
+# Windows (Admin PowerShell)
+pm2 install pm2-windows-startup
+pm2 save
+
+# Linux/Mac
+pm2 startup
+pm2 save
+```
+
+**4. Useful PM2 commands:**
+```bash
+# View running processes
+pm2 list
+
+# Check logs
+pm2 logs remotepower
+
+# Stop the app
+pm2 stop remotepower
+
+# Restart the app
+pm2 restart remotepower
+
+# Delete from PM2
+pm2 delete remotepower
+
+# Monitor in real-time
+pm2 monit
+```
+
+**5. Configuration:**
+The `ecosystem.config.js` file contains PM2 configuration including:
+- Auto-restart on crashes
+- Memory limit: 200MB
+- Logging to `./logs/` directory
+- Watch mode disabled (can be enabled for development)
+
 ### Use the Web Interface
 
 1. Open your browser and go to `http://localhost:3000`
