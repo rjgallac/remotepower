@@ -19,7 +19,7 @@ const SSH_PASSWORD = process.env.SSH_PASSWORD || ''; // Ideally use SSH keys ins
 const SSH_KEY_PATH = process.env.SSH_KEY_PATH; // Optional: path to private key for authentication
 
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Check laptop status via ping
 app.get('/api/status', async (req, res) => {
