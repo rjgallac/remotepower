@@ -1,7 +1,0 @@
-node_modules/
-logs/
-
-*.md *.bat .ps1 test-diagnostics.js ecosystem.config.js start-server.bat
-
-.env* package-lock.json yarn.lock pnpm-lock.yaml
-.vscode/idea/.gitkeep Thumbs.db README.md QUICKSTART.md Dockerfile docker-compose.yml node_modules logs/*.log public/index.html script.css
