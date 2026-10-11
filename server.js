@@ -12,11 +12,16 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuration
-const LAPTOP_IP = '192.168.1.220';
+const LAPTOP_IP = process.env.LAPTOP_IP;
+const WOL_BROADCAST = process.env.WOL_BROADCAST || '255.255.255.255';
 const LAPTOP_MAC = '2C-FD-A1-8A-DC-81';
 const SSH_USER = process.env.SSH_USER || 'user'; // Change this or set via environment variable
 const SSH_PASSWORD = process.env.SSH_PASSWORD || ''; // Ideally use SSH keys instead
 const SSH_KEY_PATH = process.env.SSH_KEY_PATH; // Optional: path to private key for authentication
+
+if (!LAPTOP_IP) {
+  throw new Error('LAPTOP_IP is required. Set it in .env or pass it to the container with -e LAPTOP_IP=...');
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -69,11 +74,11 @@ function createMagicPacket(mac) {
 app.post('/api/start', (req, res) => {
   try {
     // Try multiple broadcast addresses
-    const broadcastAddresses = [
-      '192.168.1.255',      // Local subnet broadcast
+    const broadcastAddresses = [...new Set([
+      WOL_BROADCAST,        // Configured/local subnet broadcast
       '255.255.255.255',    // Global broadcast
-      '192.168.1.220'       // Direct to laptop (some systems respond to this)
-    ];
+      LAPTOP_IP             // Direct to laptop (some systems respond to this)
+    ])];
     
     const port = 9;
     
