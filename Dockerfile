@@ -9,6 +9,6 @@ COPY public ./public
 RUN npm ci --only=production && \
     mkdir -p logs public/
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "server.js"]

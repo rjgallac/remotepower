@@ -6,7 +6,7 @@ A simple web-based application to remotely start and shut down a Linux laptop us
 
 The target address is supplied at runtime through `LAPTOP_IP`; it is not built into the application.
 
-For local development, copy `.env.example` to `.env`, set `LAPTOP_IP`, and add the SSH credentials:
+For local development or Docker, copy `.env.example` to `.env` and set the values for your environment:
 
 ```powershell
 Copy-Item .env.example .env
@@ -25,16 +25,12 @@ docker buildx build --platform linux/arm64/v8 \
   -t ghcr.io/rjgallac/remotepower/remotepower:0.0.1 . --push
 ```
 
-Run it, passing the target IP into the container:
+Run it using the same `.env` file. Docker passes every variable in the file into the container:
 
 ```bash
 docker run -d --restart always \
   --network host \
-  -e LAPTOP_IP=192.168.1.220 \
-  -e WOL_BROADCAST=192.168.1.255 \
-  -e SSH_USER=xxx \
-  -e SSH_PASSWORD=xxx \
-  -e PORT=3001 \
+  --env-file .env \
   --name remotepower \
   ghcr.io/rjgallac/remotepower/remotepower:0.0.1
 ```
